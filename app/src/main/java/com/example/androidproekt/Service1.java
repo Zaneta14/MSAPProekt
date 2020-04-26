@@ -3,8 +3,11 @@ package com.example.androidproekt;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -126,6 +129,15 @@ public class Service1 extends Service {
         initializeTimerTask();
         Log.i("ZANETA", "Scheduling...");
         timer.schedule(timerTask, 5000, 5000); //
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        // If the network is active and the search field is not empty, start a FetchBook AsyncTask.
+        if (networkInfo != null && networkInfo.isConnected()) {
+            new AsyncTask1().execute();
+        }
+        //new AsyncTask1().execute();
     }
 
     public void initializeTimerTask() {
