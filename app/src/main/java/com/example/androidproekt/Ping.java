@@ -1,5 +1,9 @@
 package com.example.androidproekt;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -9,9 +13,18 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class Ping {
-    public static void doPing(JSONArray jsonArray) throws JSONException {
+
+    public static SharedPreferences prefs;
+
+    public static void doPing(JSONArray jsonArray, Context ctx) throws JSONException {
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             String host = jsonObject.getString("host");
@@ -31,9 +44,78 @@ public class Ping {
                 }
                 in.close();
                 Log.d("PINGTEST", pingResult);
+
+                prefs= ctx.getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
+                SharedPreferences.Editor editor=prefs.edit();
+                if (Service1.connectivity()) {
+                    sendPingResult(pingResult);
+                    if (prefs.getString("ping1", null)!=null) {
+                        sendPingResult(prefs.getString("ping1", null));
+                        editor.putString("ping1", null);
+                    }
+                    if (prefs.getString("ping2", null)!=null) {
+                        sendPingResult(prefs.getString("ping2", null));
+                        editor.putString("ping2", null);
+                    }
+                }
+                else {
+                    if ((prefs.getString("ping1", null)!=null && prefs.getString("ping2", null)!=null)
+                    || (prefs.getString("ping1", null)==null && prefs.getString("ping2", null)==null)) {
+                        editor.putString("ping1", pingResult);
+                    }
+                    else {
+                        editor.putString("ping2", pingResult);
+                    }
+                    editor.apply();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void sendPingResult(String result) {
+        try {
+            URL url=null;
+            if (NetworkUtils.isEmulator()) {
+                url = new URL ("http://10.0.2.2:5000/postresults");
+            }
+            else {
+                url=new URL("http://192.168.1.7:5000/postresults");
+            }
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json; utf-8");
+            con.setRequestProperty("Accept", "application/json");
+            con.setDoOutput(true);
+            String jsonInputString = "{ \"result\" : "+"\""+result+"\" }";
+            try(OutputStream os = con.getOutputStream()) {
+                byte[] input = jsonInputString.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            readResponse(con);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void readResponse(HttpURLConnection connection) {
+        try(BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine = null;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+            Log.d("PINGTEST", "response= "+response.toString());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

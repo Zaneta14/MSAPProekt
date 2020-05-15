@@ -22,6 +22,8 @@ public class Service1 extends Service {
     public static final String RESTART_INTENT = "com.example.androidproekt.RESTART_INTENT";
     protected static final int NOTIFICATION_ID = 12345;
     private int counter = 0;
+    public static NetworkInfo networkInfo;
+    public SharedPreferences prefs;
 
     public Service1() {
         super();
@@ -34,13 +36,16 @@ public class Service1 extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             restartForeground();
         }
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        this.networkInfo=networkInfo;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("ZANETA", "Service onStartCommand");
         super.onStartCommand(intent, flags, startId);
-        SharedPreferences prefs= getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
+        prefs= getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
         if (prefs.getInt("counter", 0)!=0) {
             counter=prefs.getInt("counter", 0);
         };
@@ -96,8 +101,7 @@ public class Service1 extends Service {
     public void onDestroy() {
         Log.i("ZANETA", "onDestroy called");
         super.onDestroy();
-        try {
-            SharedPreferences prefs= getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
+        try {prefs= getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putInt("counter", counter);
             editor.apply();
@@ -113,7 +117,6 @@ public class Service1 extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Log.i("ZANETA", "onTaskRemoved called");
         Intent broadcastIntent = new Intent(RESTART_INTENT);
         sendBroadcast(broadcastIntent);
     }
@@ -130,17 +133,14 @@ public class Service1 extends Service {
         initializeTimerTask();
         Log.i("ZANETA", "Scheduling...");
         timer.schedule(timerTask, 5000, 5000);
-        ConnectivityManager connMgr = (ConnectivityManager)
-                getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
-        if (networkInfo != null && networkInfo.isConnected()) {
+        if (connectivity()) {
             Log.i("ZANETA", "network okay, about to call AsyncTask");
             Thread thread = new Thread() {
                 @Override
                 public void run() {
                     while (true) {
-                        new PingAsyncTask().execute();
+                        new PingAsyncTask(getApplicationContext()).execute();
                         try {
                             Thread.sleep(600000); //10 minuti
                         } catch (InterruptedException e) {
@@ -154,7 +154,6 @@ public class Service1 extends Service {
     }
 
     public void initializeTimerTask() {
-        Log.i("ZANETA", "initialising TimerTask");
         timerTask = new TimerTask() {
             public void run() {
                 Log.i("in timer", "in timer ++++  " + (counter+=5));
@@ -164,9 +163,12 @@ public class Service1 extends Service {
 
     public void stoptimertask() {
         if (timer != null) {
-            Log.i("ZANETA", "Timer was not null and is stopped");
             timer.cancel();
             timer = null;
         }
+    }
+
+    public static boolean connectivity() {
+        return networkInfo != null && networkInfo.isConnected();
     }
 }

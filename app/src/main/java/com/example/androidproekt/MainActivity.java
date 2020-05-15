@@ -1,6 +1,7 @@
 package com.example.androidproekt;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;

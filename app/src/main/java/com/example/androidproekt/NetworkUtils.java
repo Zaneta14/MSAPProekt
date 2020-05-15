@@ -1,6 +1,12 @@
 package com.example.androidproekt;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,9 +20,14 @@ public class NetworkUtils {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
         String pingJSONString = null;
-
         try {
-            Uri uri=Uri.parse("http://10.0.2.2:5000/getJobs").buildUpon().build();
+            Uri uri=null;
+            if (isEmulator()) {
+                uri=Uri.parse("http://10.0.2.2:5000/getJobs/emulator").buildUpon().build();
+            }
+            else {
+                uri=Uri.parse("http://192.168.1.7:5000/getJobs/hardware").buildUpon().build();
+            }
             URL requestURL =new URL(uri.toString());
 
             urlConnection = (HttpURLConnection) requestURL.openConnection();
@@ -53,5 +64,24 @@ public class NetworkUtils {
             }
         }
         return pingJSONString;
+    }
+
+    public static boolean isEmulator() {
+        return (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.PRODUCT.contains("sdk_google")
+                || Build.PRODUCT.contains("google_sdk")
+                || Build.PRODUCT.contains("sdk")
+                || Build.PRODUCT.contains("sdk_x86")
+                || Build.PRODUCT.contains("vbox86p")
+                || Build.PRODUCT.contains("emulator")
+                || Build.PRODUCT.contains("simulator");
     }
 }

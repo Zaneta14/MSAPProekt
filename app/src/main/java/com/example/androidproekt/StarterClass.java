@@ -14,8 +14,8 @@ class StarterClass {
 
     public void launchService(Context context) {
       if (context == null) {
-            return;
-        }
+          return;
+      }
         serviceIntent = new Intent(context, Service1.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Log.i("ZANETA", "started foreground");
