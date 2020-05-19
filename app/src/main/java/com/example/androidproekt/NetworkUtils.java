@@ -16,10 +16,10 @@ import java.net.URL;
 
 public class NetworkUtils {
 
-    static String getPingInfo() {
+    static String getJobsInfo() {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
-        String pingJSONString = null;
+        String jobJSONString = null;
         try {
             Uri uri=null;
             if (isEmulator()) {
@@ -45,7 +45,7 @@ public class NetworkUtils {
             if (builder.length() == 0) {
                 return null;
             }
-            pingJSONString = builder.toString();
+            jobJSONString = builder.toString();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -63,7 +63,7 @@ public class NetworkUtils {
 
             }
         }
-        return pingJSONString;
+        return jobJSONString;
     }
 
     public static boolean isEmulator() {

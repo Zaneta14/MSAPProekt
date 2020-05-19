@@ -140,7 +140,7 @@ public class Service1 extends Service {
                 @Override
                 public void run() {
                     while (true) {
-                        new PingAsyncTask(getApplicationContext()).execute();
+                        new JobAsyncTask(getApplicationContext()).execute();
                         try {
                             Thread.sleep(600000); //10 minuti
                         } catch (InterruptedException e) {

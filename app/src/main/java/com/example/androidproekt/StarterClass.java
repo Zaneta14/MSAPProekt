@@ -8,8 +8,7 @@ import android.util.Log;
 class StarterClass {
     private static Intent serviceIntent = null;
 
-    public StarterClass() {
-        Log.i("ZANETA", "Starterclass constructor");
+    public StarterClass(){
     }
 
     public void launchService(Context context) {

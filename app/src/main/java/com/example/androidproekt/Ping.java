@@ -24,57 +24,54 @@ public class Ping {
 
     public static SharedPreferences prefs;
 
-    public static void doPing(JSONArray jsonArray, Context ctx) throws JSONException {
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            String host = jsonObject.getString("host");
-            int count = jsonObject.getInt("count");
-            int packetSize = jsonObject.getInt("packetSize");
-            String pingResult = "";
-            try {
-                String pingCmd = "ping -s " + packetSize + " -c " + count + " " + host;
-                Runtime r = Runtime.getRuntime();
-                Process p = r.exec(pingCmd);
-                BufferedReader in = new BufferedReader(new
-                        InputStreamReader(p.getInputStream()));
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    Log.d("PINGTEST", inputLine);
-                    pingResult += inputLine;
-                }
-                in.close();
-                Log.d("PINGTEST", pingResult);
+    public static void doPing(JSONObject jsonObject, Context ctx) throws JSONException {
 
-                prefs= ctx.getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
-                SharedPreferences.Editor editor=prefs.edit();
-                if (Service1.connectivity()) {
-                    sendPingResult(pingResult);
-                    if (prefs.getString("ping1", null)!=null) {
-                        sendPingResult(prefs.getString("ping1", null));
-                        editor.putString("ping1", null);
+                String host = jsonObject.getString("host");
+                int count = jsonObject.getInt("count");
+                int packetSize = jsonObject.getInt("packetSize");
+                String pingResult = "";
+                try {
+                    String pingCmd = "ping -s " + packetSize + " -c " + count + " " + host;
+                    Runtime r = Runtime.getRuntime();
+                    Process p = r.exec(pingCmd);
+                    BufferedReader in = new BufferedReader(new
+                            InputStreamReader(p.getInputStream()));
+                    String inputLine;
+                    while ((inputLine = in.readLine()) != null) {
+                        Log.d("PINGTEST", inputLine);
+                        pingResult += inputLine;
                     }
-                    if (prefs.getString("ping2", null)!=null) {
-                        sendPingResult(prefs.getString("ping2", null));
-                        editor.putString("ping2", null);
+                    in.close();
+                    Log.d("PINGTEST", pingResult);
+
+                    prefs = ctx.getSharedPreferences("com.example.androidproekt", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    if (Service1.connectivity()) {
+                        sendResult(pingResult);
+                        if (prefs.getString("ping1", null) != null) {
+                            sendResult(prefs.getString("ping1", null));
+                            editor.putString("ping1", null);
+                        }
+                        if (prefs.getString("ping2", null) != null) {
+                            sendResult(prefs.getString("ping2", null));
+                            editor.putString("ping2", null);
+                        }
+                    } else {
+                        if ((prefs.getString("ping1", null) != null && prefs.getString("ping2", null) != null)
+                                || (prefs.getString("ping1", null) == null && prefs.getString("ping2", null) == null)) {
+                            editor.putString("ping1", pingResult);
+                        } else {
+                            editor.putString("ping2", pingResult);
+                        }
+                        editor.apply();
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                else {
-                    if ((prefs.getString("ping1", null)!=null && prefs.getString("ping2", null)!=null)
-                    || (prefs.getString("ping1", null)==null && prefs.getString("ping2", null)==null)) {
-                        editor.putString("ping1", pingResult);
-                    }
-                    else {
-                        editor.putString("ping2", pingResult);
-                    }
-                    editor.apply();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-        }
-    }
 
-    public static void sendPingResult(String result) {
+
+    public static void sendResult(String result) {
         try {
             URL url=null;
             if (NetworkUtils.isEmulator()) {
@@ -111,7 +108,7 @@ public class Ping {
             while ((responseLine = br.readLine()) != null) {
                 response.append(responseLine.trim());
             }
-            Log.d("PINGTEST", "response= "+response.toString());
+            Log.d("RESPONSE", "response= "+response.toString());
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } catch (IOException e) {
